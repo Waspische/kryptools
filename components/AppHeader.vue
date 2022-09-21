@@ -35,7 +35,7 @@
               to: '/inspire',
             },
           ],
-          title: 'Kryptools',
+          title: 'Kryptools - v.0.0.0 (did it last night)',
         }
       },
     }

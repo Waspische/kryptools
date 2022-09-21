@@ -1,22 +1,23 @@
 <!-- eslint-disable vue/valid-v-slot -->
 <template>
   <v-row justify="center" align="center">
-    <v-col cols="12" sm="8" md="6">
+    <v-col cols="12" sm="10" md="8">
       
       <v-card>
         <v-card-title class="headline">
           Citizen which did not claimed land
-          <v-spacer/>
-          <v-btn icon @click="getUnclaimed">
-            <v-icon>mdi-reload</v-icon>
-          </v-btn>
         </v-card-title>
         <v-data-table
           :headers="headers"
           :items="unclaimedLandForCtz"
           :items-per-page="50"
+          :loading="loadingUnclaimed"
+          loading-text="Loading from citizen contract... Please wait"
           class="elevation-1"
         >
+          <template #item.stats="{  }">
+            Coming soon
+          </template>
           <template #item.forSale="{  }">
             Coming soon
           </template>
@@ -35,7 +36,7 @@
         </v-data-table>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="primary" :loading="loadingUnclaimed" @click="getUnclaimed"> Get Unclaimed </v-btn>
+          <!-- <v-btn color="primary" :loading="loadingUnclaimed" @click="getUnclaimed"> Get Unclaimed </v-btn> -->
         </v-card-actions>
       </v-card>
     </v-col>
@@ -60,6 +61,7 @@ export default {
             value: 'citizenId',
           },
           { text: 'For Sale', value: 'forSale' },
+          { text: 'Armor', value: 'stats' },
           { text: 'Opensea', value: 'opensea' }
         ],
     }
@@ -71,14 +73,16 @@ export default {
 
     this.landContract = new ethers.Contract(this.landContractId, landABI, this.$wallet.provider)
 
-    const options = {method: 'GET', headers: {accept: 'application/json', 'X-API-KEY': ' '}};
+    this.getUnclaimed()
 
-    const response = fetch('https://api.opensea.io/api/v1/assets?token_ids=5123&token_ids=5116&order_direction=desc&asset_contract_address=0x63d85ec7B1561818Ec03E158ec125a4113038A00&limit=20&include_orders=false', options)
-      .then(response => response.json())
-      .then(response => console.log(response))
-      .catch(err => console.error(err));
+    // const options = {method: 'GET', headers: {accept: 'application/json', 'X-API-KEY': ' '}};
 
-      console.log(response)
+    // const response = fetch('https://api.opensea.io/api/v1/assets?token_ids=5123&token_ids=5116&order_direction=desc&asset_contract_address=0x63d85ec7B1561818Ec03E158ec125a4113038A00&limit=20&include_orders=false', options)
+    //   .then(response => response.json())
+    //   .then(response => console.log(response))
+    //   .catch(err => console.error(err));
+
+    //   console.log(response)
 
   },
   methods: {
@@ -105,8 +109,6 @@ export default {
       this.loadingUnclaimed = false
 
       // 4994,5012,5016,5017,5048,5051,5052,5053,5060,5066,5067,5070,5071,5097,5107,5116,5123
-      
-
     }
   }
 }

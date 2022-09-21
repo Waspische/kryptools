@@ -7,10 +7,15 @@ export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
 
+
+  router: {
+    base: '/kryptools'
+  },
+
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     titleTemplate: '%s - kryptools',
-    title: 'kryptools',
+    title: 'Kryptools',
     htmlAttrs: {
       lang: 'en',
     },

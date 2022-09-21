@@ -8,7 +8,7 @@
     </v-main>
    
     <v-footer app>
-      <span>&copy; {{ new Date().getFullYear() }}</span>
+      <span>Made with ♥ by Wasp#1975 - If it's usefull for you 👉 0x0c3D1c91Ac325e58A839BBdD46DDEa1FD2Da3798</span>
     </v-footer>
   </v-app>
 </template>
