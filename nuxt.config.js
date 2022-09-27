@@ -9,13 +9,13 @@ export default {
 
 
   router: {
-    base: '/kryptools'
+    base: '/kryptools/'
   },
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     titleTemplate: '%s - Kryptools',
-    title: 'Kryptools',
+    title: 'Kryptoria map',
     htmlAttrs: {
       lang: 'en',
     },
@@ -29,11 +29,14 @@ export default {
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
-  css: [],
+  css: [
+  ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
-    '@/plugins/wallet'
+    '@/plugins/wallet',
+    '@/plugins/GoogleAnalytics',
+    '@/plugins/konvaInit'
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -62,6 +65,12 @@ export default {
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
+    treeShake: true,
+    defaultAssets: {
+      font: {
+        family: 'Source Code Pro'
+      }
+    },
     theme: {
       dark: true,
       themes: {
@@ -79,5 +88,6 @@ export default {
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
-  build: {},
+  build: {
+  }
 }

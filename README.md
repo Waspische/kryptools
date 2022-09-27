@@ -6,6 +6,8 @@ Ether.js + Nuxt + Metamask
 https://medium.com/zero-code-nft/nuxt-nft-dapp-with-metamask-and-ethers-js-create-dapp-b534036a1689
 
 
+#honeycomb map
+https://github.com/flauwekeul/honeycomb
 
 
 ## Build Setup

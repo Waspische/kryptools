@@ -2,7 +2,7 @@ import Vue from 'vue'
 import { ethers } from 'ethers'
 import MetaMaskOnboarding from '@metamask/onboarding'
 
-export default async ({env}, inject) => {
+export default ({env}, inject) => {
 
     const wallet = Vue.observable({
         account: null,
@@ -16,7 +16,10 @@ export default async ({env}, inject) => {
         },
 
         async init() {
-            if(!window.ethereum) return
+            if(!window.ethereum) {
+                console.log('coucou')
+                window.ethereum = ethers.getDefaultProvider()
+            }
             
             this.provider = new ethers.providers.Web3Provider(window.ethereum) // prefably diff node like Infura, Alchemy or Moralis
             this.network = this.provider.getNetwork()

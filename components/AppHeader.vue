@@ -6,14 +6,14 @@
       <v-toolbar-title v-text="title" />
       <v-spacer />
 
-      <v-btn
+      <!-- <v-btn
           color="primary"
           :disabled="!!$wallet.account"
           @click="$wallet.connect">
           <strong>{{
               !!$wallet.account ? $wallet.accountCompact : 'Connect Wallet'
           }}</strong>
-      </v-btn>
+      </v-btn> -->
     </v-app-bar>
 </template>
 
@@ -35,7 +35,7 @@
               to: '/inspire',
             },
           ],
-          title: 'Kryptools - v.0.0.0 (did it last night)',
+          title: 'Kryptools - v.0.0.1',
         }
       },
     }
