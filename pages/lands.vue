@@ -24,7 +24,7 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-card>
+    <!-- <v-card>
       <v-card-title>
         My Lands
       </v-card-title>
@@ -36,7 +36,7 @@
         dense
       >
       </v-data-table>
-    </v-card>
+    </v-card> -->
     <v-card>
       <v-card-title>
         Lands

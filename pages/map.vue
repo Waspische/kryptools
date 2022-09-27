@@ -8,47 +8,53 @@
       justify="center"
     >
       Some lands have not been minted yet<br/>
-      Future features include locating your lands, cities and kryptorian/degen lands
+      Future features include locating your lands and kryptorian/degen lands
     </v-alert>
     <header class="text-center ma-2" justify="center">
       <h2>Kryptoria map</h2>
-      <div class="resource">
-        <div>
+      <div class="resources">
+        <div class="resource">
           <p><u>Land</u><br/>Binary Code</p>
           <img id="land" src="/kryptools/mapPack_tilesheet.png" />
         </div>
-        <div>
+        <div class="resource">
           <p><u>Mountain</u><br/>Krypto Ore</p>
           <img id="mountain" src="/kryptools/mapPack_tilesheet.png" />
         </div>
-        <div>
+        <div class="resource">
           <p><u>Desert</u><br/>Meta Spice</p>
           <img id="desert" src="/kryptools/mapPack_tilesheet.png" />
         </div>
-        <div>
+        <div class="resource">
           <p><u>Forest</u><br/>Uni Shard</p>
           <div class="overlap">
             <img id="forestBase" src="/kryptools/mapPack_tilesheet.png" />
             <img id="forest" src="/kryptools/mapPack_tilesheet.png" />
           </div>
         </div>
-        <div>
+        <div class="resource">
           <p><u>Ocean</u><br/>BioSynth</p>
           <img id="ocean" src="/kryptools/mapPack_tilesheet.png" />
         </div>
-        <!-- <div>
-          <p>City</p>
+        <div class="resource">
+          <p>Capital<br/>40%</p>
+          <img id="capital" src="/kryptools/mapPack_tilesheet.png" />
+        </div>
+        <div class="resource">
+          <p>City<br/>30%</p>
           <img id="city" src="/kryptools/mapPack_tilesheet.png" />
-        </div> -->
+        </div>
+        <div class="resource">
+          <p>Town<br/>20%</p>
+          <img id="town" src="/kryptools/mapPack_tilesheet.png" />
+        </div>
+        <div class="resource">
+          <p>Village<br/>10%</p>
+          <img id="village" src="/kryptools/mapPack_tilesheet.png" />
+        </div>
       </div>
     </header>
-    <!-- <v-text-field
-      v-model="walletAddress"
-      append-icon="mdi-magnify"
-      label="Your wallet Address"
-      single-line
-      hide-details
-    ></v-text-field>
+    <!-- <input type ="text"></input>
     <v-btn id="displayLands">
       Display my lands
     </v-btn> -->
@@ -98,17 +104,17 @@ function draw(images) {
       container: 'canvas',
       width,
       height,
-      draggable: true,
+      draggable: false
     }); 
 
     const layer = new Konva.Layer({
       offsetX: 74*map.innerRadius*2+map.innerRadius,
-      offsetY: -map.innerRadius*2
+      offsetY: -map.innerRadius*2,
     });
     layer.rotate(-60)
 
     // add tooltip
-    const tooltipLayer = new Konva.Layer();
+    const tooltipLayer = new Konva.Layer({    });
 
     const tooltip = new Konva.Label({
       opacity: 0.75,
@@ -207,30 +213,39 @@ function draw(images) {
         }
         
         // TODO update city name
-        // const city = tile.CITY
-        // if (city !== 'None'  && r > 0) {
-        //     // land under forest
-        //     resource.tileAtlasId = 60
-        //     const patternPentagon = new Konva.Rect({
-        //         x: c * map.tsize + map.tsize/4,
-        //         //   y: stage.height() / 2,
-        //         y: r * map.tsize + map.tsize/2,
-        //         width: map.ssize,
-        //         height: map.ssize,
-        //         fillPatternImage: images.tileAtlas,
-        //         fillPatternOffset: {
-        //              x: (111 % map.atlasCols) * map.ssize, 
-        //              y: Math.floor(111 / map.atlasCols) * map.ssize 
-        //         },
-        //         scale: {
-        //             x: 0.5/2,
-        //             y: 0.5/2
-        //         },
-        //         tile
-        //     });
+        let city = null
+        if(land.Capital){
+          city = 64
+        } else if(land.City){
+          city = 111
+        } else if(land.Town){
+          city = 110
+        } else if(land.Village){
+          city = 55
+        }
+        if (city) {
+            const patternPentagon = new Konva.Rect({
+              x: (coords.x + (coords.y%2) * 0.5) * (map.innerRadius * 2) + map.innerRadius/2,
+              y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius/2),
+              width: map.ssize,
+              height: map.ssize,
+              fillPatternImage: images.tileAtlas,
+              fillPatternOffset: {
+                x: (city % map.atlasCols) * map.ssize, 
+                y: Math.floor(city / map.atlasCols) * map.ssize 
+              },
+              offsetX: -map.innerRadius/4,
+              offsetY: map.innerRadius,
+              rotation: 60,
+              scale: {
+                  x: 0.5,
+                  y: 0.5
+              },
+              land
+            });
 
-        //     layer.add(patternPentagon);
-        // }
+            layer.add(patternPentagon);
+        }
       }
     }
 
@@ -287,48 +302,31 @@ function draw(images) {
 }
 
 function getTileIdFromResource(resource){
-    // const resources = [
-    //     {
-    //         tileAtlasId: 18,
-    //         name: 'desert'
-    //     },
-    //     {
-    //         tileAtlasId: 23,
-    //         name: 'land'
-    //     },
-    //     {
-    //         tileAtlasId: 28,
-    //         name: 'mountain'
-    //     },
-    //     {
-    //         tileAtlasId: 91,
-    //         name: 'forest'
-    //     },
-    //     {
-    //         tileAtlasId: 202,
-    //         name: 'ocean'
-    //     }
-    // ]
     const resources = [
         {
             tileAtlasId: 18,
             name: 'Meta Spice'
+    //         name: 'desert'
         },
         {
             tileAtlasId: 23,
             name: 'Binary Code'
+    //         name: 'land'
         },
         {
             tileAtlasId: 28,
             name: 'Krypto Ore'
+    //         name: 'mountain'
         },
         {
             tileAtlasId: 91,
             name: 'Uni Shard'
+    //         name: 'forest'
         },
         {
             tileAtlasId: 202,
             name: 'BioSynth'
+    //         name: 'ocean'
         }
     ]
     return resources.find(r => r.name === resource)
@@ -384,14 +382,18 @@ loadImages(sources, function (images) {
 export default {
   name: 'KryptoriaMap',
   data() {
-    return {}
+    return {
+      mapData: map
+    }
   },
   head() {
     return {
       title: 'Kryptoria map',
     }
   },
-  mounted() {},
+  mounted() {
+    console.log(this.mapData)
+  },
   methods: {}
 }
 </script>
@@ -415,15 +417,19 @@ export default {
 canvas {
   background: none;
 }
-.resource {
+.resources {
   display: flex;
   justify-content: space-around;
-  width: 600px;
+  width: 800px;
   margin: auto;
+}
+.resource {
+  min-width: 106px;
 }
 
 .overlap {
   display: flex;
+    justify-content: center;
 }
 
 #land {
@@ -472,10 +478,31 @@ canvas {
   object-position: -960px -704px;
 }
 
+#capital {
+  width: 64px;
+  height: 64px;
+  object-fit: none;
+  object-position: -832px -192px;
+}
+
 #city {
   width: 64px;
   height: 64px;
   object-fit: none;
   object-position: -576px -384px;
+}
+
+#town {
+  width: 64px;
+  height: 64px;
+  object-fit: none;
+  object-position: -512px -384px;
+}
+
+#village {
+  width: 64px;
+  height: 64px;
+  object-fit: none;
+  object-position: -256px -192px;
 }
 </style>

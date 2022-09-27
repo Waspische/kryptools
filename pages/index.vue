@@ -54,13 +54,7 @@
         </div>
       </div>
     </header>
-    <!-- <v-text-field
-      v-model="walletAddress"
-      append-icon="mdi-magnify"
-      label="Your wallet Address"
-      single-line
-      hide-details
-    ></v-text-field>
+    <!-- <input type ="text"></input>
     <v-btn id="displayLands">
       Display my lands
     </v-btn> -->
@@ -110,17 +104,17 @@ function draw(images) {
       container: 'canvas',
       width,
       height,
-      draggable: true,
+      draggable: false
     }); 
 
     const layer = new Konva.Layer({
       offsetX: 74*map.innerRadius*2+map.innerRadius,
-      offsetY: -map.innerRadius*2
+      offsetY: -map.innerRadius*2,
     });
     layer.rotate(-60)
 
     // add tooltip
-    const tooltipLayer = new Konva.Layer();
+    const tooltipLayer = new Konva.Layer({    });
 
     const tooltip = new Konva.Label({
       opacity: 0.75,
@@ -388,14 +382,18 @@ loadImages(sources, function (images) {
 export default {
   name: 'KryptoriaMap',
   data() {
-    return {}
+    return {
+      mapData: map
+    }
   },
   head() {
     return {
       title: 'Kryptoria map',
     }
   },
-  mounted() {},
+  mounted() {
+    console.log(this.mapData)
+  },
   methods: {}
 }
 </script>
