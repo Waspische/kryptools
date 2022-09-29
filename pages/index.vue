@@ -4,10 +4,16 @@
   <div>
     <v-alert
       type="info"
+      class="mx-12 font-weight-bold my-2"
+      justify="center"
+    >
+      Move map with arrow keys, drag and drop, or mouse wheel (+ shift for horizontal)
+    </v-alert>
+    <v-alert
+      type="info"
       class="mx-12"
       justify="center"
     >
-      Some lands have not been minted yet<br/>
       Future features include locating your lands and kryptorian/degen lands
     </v-alert>
     <header class="text-center ma-2" justify="center">
@@ -96,25 +102,33 @@ function loadImages(sources, callback) {
 }
 
 function draw(images) {
-    const width = (map.innerRadius*(map.width)*2+map.innerRadius) // window.innerWidth;
-    const height = (map.innerRadius*map.height*2* 0.866025404+map.innerRadius); // window.innerHeight;
+    const width = (map.innerRadius*map.width*2) + map.innerRadius // window.innerWidth;
+    const height = (map.outerRadius*2*map.height/2)+(map.outerRadius*map.height/2)+map.innerRadius; // window.innerHeight;
     console.log('draw')
 
     const stage = new Konva.Stage({
       container: 'canvas',
       width,
       height,
-      draggable: false
+      draggable: true
     }); 
+    // stage.scale({x:0.5, y:0.5})
 
     const layer = new Konva.Layer({
-      offsetX: 74*map.innerRadius*2+map.innerRadius,
-      offsetY: -map.innerRadius*2,
+      // offsetX: 74*map.innerRadius*2+map.innerRadius,
+      // offsetY: -map.innerRadius*2,
     });
-    layer.rotate(-60)
+    // layer.rotate(-60)
+
+    const container = stage.container();
+    container.tabIndex = 1; // make it focusable
+    // focus it
+    // also stage will be in focus on its click
+    container.focus();
 
     // add tooltip
-    const tooltipLayer = new Konva.Layer({    });
+    const tooltipLayer = new Konva.Layer({
+    });
 
     const tooltip = new Konva.Label({
       opacity: 0.75,
@@ -160,10 +174,10 @@ function draw(images) {
 
     for (const land of map.properties) {
       // console.log(land)
-      const landCoords = land.COORDINATES.split(' ') // x,y,z
+      const landCoords = land.COORDINATES.split(' ') // 0 = x, 1 = y, 2 = z
       // console.log(landCoords)
       const hex = Hex() 
-      const coords = hex.toCartesian({ q: parseInt(landCoords[2]), r: parseInt(landCoords[0]) }) // col (q)(y) - row (r)(z) - s (x)
+      const coords = hex.toCartesian({ q: parseInt(landCoords[0]), r: parseInt(landCoords[2]) }) // col (q)(y) - row (r)(z) - s (x)
       // console.log(coords)
       // allXY.push(coords)
       const resource = getTileIdFromResource(land.RESOURCE);
@@ -171,7 +185,7 @@ function draw(images) {
 
         const patternPentagon = new Konva.RegularPolygon({
             x: ((coords.x + (coords.y%2) * 0.5) * (map.innerRadius * 2) + map.innerRadius),
-            y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius),
+            y: height - (coords.y * map.outerRadius * 1.5 + map.outerRadius),
             // y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius) + (map.innerRadius*map.height*2* 0.866025404+map.innerRadius),
             sides:6,
             radius: map.outerRadius,
@@ -186,30 +200,30 @@ function draw(images) {
         layer.add(patternPentagon);
 
         if (resource.tileAtlasId === 91) {
-            // land under forest
-            resource.tileAtlasId = 60
-            const patternPentagon = new Konva.Rect({
+          // land under forest
+          resource.tileAtlasId = 60
+          const patternPentagon = new Konva.Rect({
             x: (coords.x + (coords.y%2) * 0.5) * (map.innerRadius * 2) + map.innerRadius/2,
-            y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius/2),
-            // y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius/2) + (map.innerRadius*map.height*2* 0.866025404+map.innerRadius),
-                width: map.ssize,
-                height: map.ssize,
-                fillPatternImage: images.tileAtlas,
-                fillPatternOffset: {
-                      x: (resource.tileAtlasId % map.atlasCols) * map.ssize, 
-                      y: Math.floor(resource.tileAtlasId / map.atlasCols) * map.ssize 
-                },
-                scale: {
-                    x: 0.5,
-                    y: 0.5
-                },
-                offsetX: -map.innerRadius/4,
-                offsetY: map.innerRadius,
-                rotation: 60,
-                land
-            });
+            y: height - (coords.y * map.outerRadius * 1.5 + map.outerRadius),
+          // y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius/2) + (map.innerRadius*map.height*2* 0.866025404+map.innerRadius),
+              width: map.ssize,
+              height: map.ssize,
+              fillPatternImage: images.tileAtlas,
+              fillPatternOffset: {
+                    x: (resource.tileAtlasId % map.atlasCols) * map.ssize, 
+                    y: Math.floor(resource.tileAtlasId / map.atlasCols) * map.ssize 
+              },
+              scale: {
+                  x: 0.375,
+                  y: 0.375
+              },
+              offsetX: -map.innerRadius/4,
+              offsetY: map.innerRadius,
+              // rotation: 60,
+              land
+          });
 
-            layer.add(patternPentagon);
+          layer.add(patternPentagon);
         }
         
         // TODO update city name
@@ -224,28 +238,44 @@ function draw(images) {
           city = 55
         }
         if (city) {
-            const patternPentagon = new Konva.Rect({
-              x: (coords.x + (coords.y%2) * 0.5) * (map.innerRadius * 2) + map.innerRadius/2,
-              y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius/2),
-              width: map.ssize,
-              height: map.ssize,
-              fillPatternImage: images.tileAtlas,
-              fillPatternOffset: {
-                x: (city % map.atlasCols) * map.ssize, 
-                y: Math.floor(city / map.atlasCols) * map.ssize 
-              },
-              offsetX: -map.innerRadius/4,
-              offsetY: map.innerRadius,
-              rotation: 60,
-              scale: {
-                  x: 0.5,
-                  y: 0.5
-              },
-              land
-            });
+          const patternPentagon = new Konva.Rect({
+            x: (coords.x + (coords.y%2) * 0.5) * (map.innerRadius * 2) + map.innerRadius/2,
+            y: height - (coords.y * map.outerRadius * 1.5 + map.outerRadius),
+            width: map.ssize,
+            height: map.ssize,
+            fillPatternImage: images.tileAtlas,
+            fillPatternOffset: {
+              x: (city % map.atlasCols) * map.ssize, 
+              y: Math.floor(city / map.atlasCols) * map.ssize 
+            },
+            offsetX: -map.innerRadius/4,
+            offsetY: map.innerRadius,
+            // rotation: 60,
+            scale: {
+                x: 0.375,
+                y: 0.375
+            },
+            land
+          });
 
-            layer.add(patternPentagon);
+          layer.add(patternPentagon);
         }
+
+
+        const landIdText = new Konva.Text({
+            x: ((coords.x + (coords.y%2) * 0.5) * (map.innerRadius * 2) + map.innerRadius),
+            y: height - (coords.y * map.outerRadius * 1.5 + map.outerRadius),
+            text: land.edition,
+            fontSize: 9,
+            fontFamily: 'Calibri',
+            fill: 'black',
+            offsetX: map.innerRadius/2,
+            offsetY: map.innerRadius/2,
+            land,
+        });
+
+        layer.add(landIdText);
+
       }
     }
 
@@ -265,7 +295,7 @@ function draw(images) {
         const tile = evt.target;
         if (tile) {
             // update tooltip
-            const mousePos = tile.getStage().getPointerPosition();
+            const mousePos = tile.getStage().getRelativePointerPosition()
             tooltip.position({
                 x: mousePos.x,
                 y: mousePos.y - 5,
@@ -352,15 +382,14 @@ const flatLands = lands.map((land) => {
       })
 console.log(flatLands)
 const map = {
-    width: 102,
+    width: 100,
     height: 100,
     atlasCols: 17,
     atlasRows: 12,
     ssize: 64,
     tsize: 32,
-    yOffset: -50,
-    innerRadius: 32 * 0.866025404,
-    outerRadius: 32,
+    innerRadius: 24 * 0.866025404,
+    outerRadius: 24,
     properties: flatLands,
     getProperty(col, row){
       // TODO update X and Y name
@@ -406,12 +435,8 @@ export default {
 .main-wrapper {
   margin: 0 auto;
   overflow: auto;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
   height: 90vh;
   width: 90vw;
-}.main-wrapper::-webkit-scrollbar {
-  display: none;
 }
 
 canvas {

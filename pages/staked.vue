@@ -151,13 +151,15 @@ export default {
 
             let result = []
 
-            // batchs of 25
+            // batchs of 30
             const size = 30
             let page = this.OSpage
             const limit = 10000
 
+            const promises = []
+
             while(page*size <= limit){
-                console.log('page ' + page)
+                // console.log('page ' + page)
                 const batchIds = this.ids.slice(page*size, page*size+size)
 
                 let idsString = ''
@@ -174,7 +176,7 @@ export default {
                     headers: { accept: 'application/json', 'X-API-KEY': ' ' },
                 }
 
-                const response = await fetch(
+                promises.push(fetch(
                     'https://api.opensea.io/api/v1/assets?' +
                     idsString +
                     '&order_direction=desc' +
@@ -182,29 +184,43 @@ export default {
                     this.contractId +
                     '&limit=50&include_orders=true',
                     options
-                )
-
-                // console.log(response)
-
-                const openseaData = await response.json()
-                console.log(openseaData)
-
-                result = result.concat(openseaData.assets.map((asset) => {
-                    return {
-                    id: asset.token_id,
-                    price: asset.seaport_sell_orders
-                        ? asset.seaport_sell_orders[0].current_price
-                        : null,
-                    }
-                }))
+                ))
 
                 page++
                 this.OSpage = page
                 await this.sleep(250)
             }
 
+            const responses = await Promise.all(promises)
+
+            result = await Promise.all(responses.map(async (r) => {
+                // console.log(response)
+
+                const openseaData = await r.json()
+                // console.log('openseaData')
+                // console.log(openseaData)
+
+                const data = openseaData.assets.map((asset) => {
+                    return {
+                    id: asset.token_id,
+                    price: asset.seaport_sell_orders
+                        ? asset.seaport_sell_orders[0].current_price
+                        : null,
+                    }
+
+                })
+                // console.log('data')
+                // console.log(data)
+
+                return data
+            }))
+
+
+            // console.log('result')
+            // console.log(result.flat())
+
             this.loadingOS = false
-            this.forSale = result.filter(i => i.price != null)
+            this.forSale = result.flat().filter(i => i.price != null)
         },
         async getContractInfo(){
             const limit = 10000
@@ -212,14 +228,14 @@ export default {
             // for (let i = 0; i < this.ids.length; i++) {
             for (let i = 0; i < limit; i++) {
                 this.contractPage = i+1
-                console.log(i)
+                // console.log(i)
                 const response = await this.citizenContract.getStakingTime(this.ids[i])
                 result.push({
                     staked: response[0],
                     id: this.ids[i]
                 })
             }
-            console.log(result)
+            // console.log(result)
             this.loadingContract = false
             this.staked = result.filter(i=>i.staked)
         },

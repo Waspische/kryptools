@@ -10,7 +10,7 @@
           max-height="800"
           tile
         >
-          <v-card-title>For sale</v-card-title>
+          <v-card-title>For sale ({{forSale.length}})</v-card-title>
           <v-list nav dense>
             <v-list-item v-for="item in forSale" :key="item.id">
               <v-list-item-content>
@@ -41,7 +41,7 @@
           max-height="800"
           tile
         >
-          <v-card-title>Staked</v-card-title>
+          <v-card-title>Staked ({{staked.length}})</v-card-title>
           <v-list nav dense>
             <v-list-item v-for="item in staked" :key="item.id">
               <v-list-item-content>
@@ -71,7 +71,7 @@
           max-height="800"
           tile
         >
-          <v-card-title>Staked for sale</v-card-title>
+          <v-card-title>Staked for sale ({{stakedForSale.length}})</v-card-title>
           <v-list nav dense>
             <v-list-item v-for="item in stakedForSale" :key="item.id">
               <v-list-item-content>
@@ -141,21 +141,21 @@ export default {
 
         this.getStakedForSale()
 
-        console.log('coucou')
-
     },
     methods: {
         async getOpenseaInfo() {
 
             let result = []
 
-            // batchs of 25
+            // batchs of 30
             const size = 30
             let page = this.OSpage
             const limit = 10000
 
+            const promises = []
+
             while(page*size <= limit){
-                console.log('page ' + page)
+                // console.log('page ' + page)
                 const batchIds = this.ids.slice(page*size, page*size+size)
 
                 let idsString = ''
@@ -172,7 +172,7 @@ export default {
                     headers: { accept: 'application/json', 'X-API-KEY': ' ' },
                 }
 
-                const response = await fetch(
+                promises.push(fetch(
                     'https://api.opensea.io/api/v1/assets?' +
                     idsString +
                     '&order_direction=desc' +
@@ -180,47 +180,61 @@ export default {
                     this.contractId +
                     '&limit=50&include_orders=true',
                     options
-                )
-
-                // console.log(response)
-
-                const openseaData = await response.json()
-                console.log(openseaData)
-
-                result = result.concat(openseaData.assets.map((asset) => {
-                    return {
-                    id: asset.token_id,
-                    price: asset.seaport_sell_orders
-                        ? asset.seaport_sell_orders[0].current_price
-                        : null,
-                    }
-                }))
+                ))
 
                 page++
                 this.OSpage = page
                 await this.sleep(250)
             }
 
+            const responses = await Promise.all(promises)
+
+            result = await Promise.all(responses.map(async (r) => {
+                // console.log(response)
+
+                const openseaData = await r.json()
+                // console.log('openseaData')
+                // console.log(openseaData)
+
+                const data = openseaData.assets.map((asset) => {
+                    return {
+                    id: asset.token_id,
+                    price: asset.seaport_sell_orders
+                        ? asset.seaport_sell_orders[0].current_price
+                        : null,
+                    }
+
+                })
+                // console.log('data')
+                // console.log(data)
+
+                return data
+            }))
+
+
+            console.log('result')
+            console.log(result.flat())
+
             this.loadingOS = false
-            this.forSale = result.filter(i => i.price != null)
+            this.forSale = result.flat().filter(i => i.price != null)
         },
         async getContractInfo(){
             let result = []
             const response = await this.landContract.getStakingStatus(this.ids)
-            console.log(response)
+            // console.log(response)
             result = response.map(r => {
                 return {
                   staked: r[1],
                   id: r[0]
                 }
             })
-            console.log(result)
+            // console.log(result)
             this.loadingContract = false
             this.staked = result.filter(i=>i.staked)
         },
         getStakedForSale(){
             this.stakedForSale = this.staked.filter(value => 
-                this.forSale.filter(fs => value.id === fs.id).length > 0
+                this.forSale.filter(fs => value.id.toString() === fs.id).length > 0
             );
             this.loadingStakedForSale = false
         },
