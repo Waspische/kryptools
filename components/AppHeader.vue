@@ -4,7 +4,13 @@
     <v-app-bar app>
 
       <v-toolbar-title v-text="title" />
-      <v-spacer />
+      <v-btn
+        class="mx-4"
+        color="info"
+        to="/claimableWeapons">
+        <strong>Check unclaimed citizen/land</strong>
+      </v-btn>
+      <!-- <v-spacer /> -->
 
       <!-- <v-btn
           color="primary"

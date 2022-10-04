@@ -10,7 +10,7 @@
           max-height="800"
           tile
         >
-          <v-card-title>For sale</v-card-title>
+          <v-card-title>For sale ({{forSale.length}})</v-card-title>
           <v-list nav dense>
             <v-list-item v-for="item in forSale" :key="item.id">
               <v-list-item-content>
@@ -41,7 +41,7 @@
           max-height="800"
           tile
         >
-          <v-card-title>Staked</v-card-title>
+          <v-card-title>Staked ({{staked.length}})</v-card-title>
           <v-list nav dense>
             <v-list-item v-for="item in staked" :key="item.id">
               <v-list-item-content>
@@ -72,7 +72,7 @@
           max-height="800"
           tile
         >
-          <v-card-title>Staked for sale</v-card-title>
+          <v-card-title>Staked for sale ({{stakedForSale.length}})</v-card-title>
           <v-list nav dense>
             <v-list-item v-for="item in stakedForSale" :key="item.id">
               <v-list-item-content>
@@ -124,7 +124,7 @@ export default {
         title: 'Staked Citizens',
       }
     },
-    async mounted() {
+    mounted() {
 
         // init ids
         const ids = []
@@ -138,10 +138,10 @@ export default {
         this.citizenContract = new ethers.Contract(this.contractId, citizenABI, this.$wallet.provider)
 
         // query data
-        // this.getOpenseaInfo()
-        await Promise.all([this.getOpenseaInfo(), this.getContractInfo()]);
+        this.getContractInfo()
+        // await Promise.all([this.getOpenseaInfo(), this.getContractInfo()]);
 
-        this.getStakedForSale()
+        // this.getStakedForSale()
 
         console.log('coucou')
 
