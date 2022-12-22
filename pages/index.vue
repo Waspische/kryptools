@@ -93,6 +93,17 @@
             prepend-inner-icon="mdi-magnify"
             @keydown.enter="searchAddress"
           ></v-text-field>
+
+          <v-chip
+            v-for="player in addresses"
+            :key="player.address"
+            class="ma-2"
+            close
+            :color="player.color"
+            @click:close="onRemovePlayer(player)"
+          >
+            {{ player.address | formatAddress }}
+          </v-chip>
         <div class="main-wrapper">
           <div id="canvas"></div>
         </div>
@@ -111,19 +122,33 @@ const Hex = extendHex()
 
 export default {
   name: 'KryptoriaMap',
+  filters: {
+     formatAddress (value) {
+      if (!value) return ''
+      return value.slice(0,5) + '...'
+    }
+  },
   data() {
     return {
-      // address: "0x0c3D1c91Ac325e58A839BBdD46DDEa1FD2Da3798",
-      address: null,
-      loadingAddress: false,
+
       downloadLoading: false,
+
+      displayLandIds: true,
+
+      address: null,
+      // address: "0x0c3D1c91Ac325e58A839BBdD46DDEa1FD2Da3798",
+      loadingAddress: false,
       ownerLandsMessage: '',
       ownerLandsErrorMessage: '',
-      displayLandIds: true,
+      addresses: [],
+      addressesLayer: null,
+
       displayForSale: false,
       loadForSale: false,
       loadForSaleProgression: 0,
       landsForSale: [],
+      forSaleLandsLayer: null,
+
       map: null,
       tileAtlas: null,
       legend: [
@@ -182,8 +207,6 @@ export default {
       ],
       stage: null,
       idsLayer: null,
-      ownerLandsLayer: null,
-      forSaleLandsLayer: null
     }
   },
   head() {
@@ -281,7 +304,7 @@ export default {
       })
 
       // add owner lands
-      const ownerLandsLayer = new Konva.Layer({
+      const addressesLayer = new Konva.Layer({
         visible: true
       })
 
@@ -471,7 +494,7 @@ export default {
 
       stage.add(layer)
       stage.add(idsLayer)
-      stage.add(ownerLandsLayer)
+      stage.add(addressesLayer)
       stage.add(forSaleLandsLayer)
       stage.add(tooltipLayer)
 
@@ -488,7 +511,7 @@ export default {
 
       this.stage = stage;
       this.idsLayer = idsLayer
-      this.ownerLandsLayer = ownerLandsLayer
+      this.addressesLayer = addressesLayer
       this.forSaleLandsLayer = forSaleLandsLayer
 
       console.log('end draw')
@@ -618,9 +641,23 @@ export default {
       } else {
         console.log("Hide for sale")
         this.landsForSale = []
+        // reset layer
+        this.forSaleLandsLayer.destroyChildren()
       }
       this.loadForSale = false
     },
+
+    onRemovePlayer(player){
+
+      // remove chip
+      this.addresses = this.addresses.filter(p => p.address !== player.address)
+
+      // remove from map
+      const landShapes = this.addressesLayer.getChildren(function(node){
+        return player.landIds.includes(node.attrs.land.edition);
+      });
+      landShapes.forEach(l => l.destroy())
+    },  
 
     async getOpenseaInfo(ids, contractId) {
 
@@ -715,11 +752,19 @@ export default {
       this.ownerLandsErrorMessage = ''
       this.ownerLandsMessage = ''
 
+      if(this.addresses.some(a => a.address === this.address)){
+        this.ownerLandsErrorMessage = 'Address is already displayed'
+        this.loadingAddress = false
+        return
+      }
+
       const landsCount = await landContractService.getLandsCountByOwner(this.address)
       // console.log(landsCount)
 
       if(landsCount === 0 ){
         this.ownerLandsErrorMessage = 'Unknown address or no lands'
+        this.loadingAddress = false
+        return
       }
 
       const promises = []
@@ -730,10 +775,14 @@ export default {
       const landIds = await Promise.all(promises)
       // console.log(landIds)
 
-      this.drawPolygonOnLandsIds(landIds, this.ownerLandsLayer, 'red')
+      const color = this.getRandomColor()
+
+      this.drawPolygonOnLandsIds(landIds, this.addressesLayer, color)
+
+      this.addresses.push({address: this.address, color, landIds})
 
       // reset address
-      // this.address = ""
+      this.address = ""
       this.ownerLandsMessage = 'Done! Check map...'
       this.loadingAddress = false
       
@@ -743,9 +792,6 @@ export default {
 
       const ownerLands = this.map.properties.filter( l => ids.includes(l.edition))
       // console.log(ownerLands)
-
-      // reset layer
-      layer.destroyChildren()
 
       // draw
       // TODO global var
@@ -787,6 +833,10 @@ export default {
 
     async sleep (ms) {
         await new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    getRandomColor(){
+      return '#' + Math.floor(Math.random()*16777215).toString(16);
     }
   },
 }
