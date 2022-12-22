@@ -93,7 +93,7 @@
                 "headers": {
                   "accept": "application/json, text/plain, */*",
                   "accept-language": "fr-FR,fr;q=0.9",
-                  "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZGRyZXNzIjoiMHgwYzNEMWM5MUFjMzI1ZTU4QTgzOUJCZEQ0NkRERWExRkQyRGEzNzk4IiwidXNlcl9pZCI6IjI4NyIsInJsIjowLCJpYXQiOjE2NzA2NzU2NDcsImV4cCI6MTY3MDY4Mjg0N30.eZMWnK9S3Vz0lqvKwla8fvGeQLeof9ylbWuahjTBP_w",
+                  "authorization": "",
                   "cache-control": "no-cache",
                   "pragma": "no-cache",
                   "sec-fetch-dest": "empty",

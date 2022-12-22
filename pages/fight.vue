@@ -74,7 +74,7 @@ export default {
         "headers": {
           "accept": "application/json, text/plain, */*",
           "accept-language": "fr-FR,fr;q=0.9",
-          "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZGRyZXNzIjoiMHgwYzNEMWM5MUFjMzI1ZTU4QTgzOUJCZEQ0NkRERWExRkQyRGEzNzk4IiwidXNlcl9pZCI6IjI4NyIsInJsIjowLCJpYXQiOjE2NzA2MTA4OTAsImV4cCI6MTY3MDYxODA5MH0.nCLFIfexNEh-fma9yp9rcMJzevh9Wbu-rgxdg4hkHGE",
+          "authorization": "",
           "cache-control": "no-cache",
           "pragma": "no-cache",
           "sec-fetch-dest": "empty",
