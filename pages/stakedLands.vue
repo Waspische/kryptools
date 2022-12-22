@@ -140,7 +140,6 @@ export default {
         await Promise.all([this.getOpenseaInfo(), this.getContractInfo()]);
 
         this.getStakedForSale()
-
     },
     methods: {
         async getOpenseaInfo() {

@@ -59,25 +59,32 @@ export default ({env}, inject) => {
                 await wallet.setAccount(account)
             }
         },
+
+        async sign() {
+            if(wallet.account) {
+                const response = await wallet.provider.signMessage("coucouc");
+                console.log(response)
+            }
+        },
         
         async switchNetwork(config) {
             if(this.network?.chainId === config.chainId || `0x${this.network?.chainId.toString(16)}` === config.chainId) {
                 return // since we are on correct network
             }
 
-		try {
-			await this.provider.send('wallet_switchEthereumChain', [
-				{ chainId: config.chainId },
-			])
-		} catch (err) {
-			// This error code indicates that the chain has not been added to MetaMask.
-			if (err.code === 4902) {
-	    		await this.provider.send('wallet_addEthereumChain', [config])
+            try {
+                await this.provider.send('wallet_switchEthereumChain', [
+                    { chainId: config.chainId },
+                ])
+            } catch (err) {
+                // This error code indicates that the chain has not been added to MetaMask.
+                if (err.code === 4902) {
+                    await this.provider.send('wallet_addEthereumChain', [config])
                 } else {
                     throw err
                 }
-	     }
-	},
+            }
+        },
     })
 
     if(window.ethereum) {

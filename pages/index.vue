@@ -11,9 +11,9 @@
           Move map with arrow keys, drag and drop, or mouse wheel (+ shift for
           horizontal)
         </v-alert>
-        <v-alert type="info" class="my-2">
-          Future features include locating your lands and kryptorian/degen lands
-        </v-alert>
+        <!-- <v-alert type="info" class="my-2">
+          Future features include kryptorian/degen lands
+        </v-alert> -->
         <v-card class="my-2">
           <v-card-title>Options</v-card-title>
           <v-card-text>
@@ -24,6 +24,25 @@
             color="info"
             @change="onDisplayLandIds"
           ></v-switch>
+          <v-switch
+            v-model="displayForSale"
+            inset
+            :loading="loadForSale"
+            :label="`Display for sale`"
+            color="info"
+            @change="onDisplayForSale"
+          ></v-switch>
+          <v-progress-linear
+            v-if="loadForSale"
+            v-model="loadForSaleProgression"
+            class="mb-3"
+            buffer-value="0"
+            color="info"
+            height="7"
+            stream
+            rounded
+          ></v-progress-linear>
+          <v-btn small :loading="downloadLoading" @click="downloadMap">Download map</v-btn>
           </v-card-text>
         </v-card>
         <v-card>
@@ -61,15 +80,19 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="9">
-        <!-- <v-text-field
+        <v-text-field
             v-model="address"
+            :disabled="loadingAddress"
+            :loading="loadingAddress"
+            :error-messages="ownerLandsErrorMessage"
+            :success-messages="ownerLandsMessage"
             solo
             outlined
             label="Search by owner's address"
             clearable
             prepend-inner-icon="mdi-magnify"
             @keydown.enter="searchAddress"
-          ></v-text-field> -->
+          ></v-text-field>
         <div class="main-wrapper">
           <div id="canvas"></div>
         </div>
@@ -82,14 +105,25 @@
 import Konva from 'konva'
 import { extendHex } from 'honeycomb-grid'
 import lands from '~/static/data/lands.json'
+import landContractService from '@/services/landContractService'
+
 const Hex = extendHex()
 
 export default {
   name: 'KryptoriaMap',
   data() {
     return {
+      // address: "0x0c3D1c91Ac325e58A839BBdD46DDEa1FD2Da3798",
       address: null,
-      displayLandIds: false,
+      loadingAddress: false,
+      downloadLoading: false,
+      ownerLandsMessage: '',
+      ownerLandsErrorMessage: '',
+      displayLandIds: true,
+      displayForSale: false,
+      loadForSale: false,
+      loadForSaleProgression: 0,
+      landsForSale: [],
       map: null,
       tileAtlas: null,
       legend: [
@@ -147,7 +181,9 @@ export default {
         },
       ],
       stage: null,
-      idsLayer: null
+      idsLayer: null,
+      ownerLandsLayer: null,
+      forSaleLandsLayer: null
     }
   },
   head() {
@@ -171,7 +207,7 @@ export default {
         ...attributes,
       }
     })
-    console.log(flatLands)
+    // console.log(flatLands)
     const map = {
       width: 100,
       height: 100,
@@ -190,6 +226,9 @@ export default {
     this.map = map
   },
   mounted() {
+    // set contract
+    landContractService.setContract(this.$wallet.provider)
+
     const tileAtlas = new Image()
     tileAtlas.src = '/kryptools/mapPack_tilesheet.png'
 
@@ -200,7 +239,8 @@ export default {
       this.draw(tileAtlas)
     }
     // this.draw(this.tileAtlas)
-    console.log(this.map.properties)
+    console.log('end mount')
+    // console.log(this.map.properties)
   },
   methods: {
     draw(tileAtlas) {
@@ -237,7 +277,17 @@ export default {
 
       // add ids
       const idsLayer = new Konva.Layer({
-        visible: false
+        visible: true
+      })
+
+      // add owner lands
+      const ownerLandsLayer = new Konva.Layer({
+        visible: true
+      })
+
+      // add lands for sale
+      const forSaleLandsLayer = new Konva.Layer({
+        visible: true
       })
 
       const tooltip = new Konva.Label({
@@ -421,49 +471,27 @@ export default {
 
       stage.add(layer)
       stage.add(idsLayer)
+      stage.add(ownerLandsLayer)
+      stage.add(forSaleLandsLayer)
       stage.add(tooltipLayer)
 
       /*
        * bind listeners
        */
+      stage.on('mousemove', (event) => this.onMouseMove(event, tooltip))
 
-      layer.on('mousemove', function (evt) {
-        const tile = evt.target
-        if (tile) {
-          // update tooltip
-          const mousePos = tile.getStage().getRelativePointerPosition()
-          tooltip.position({
-            x: mousePos.x,
-            y: mousePos.y - 5,
-          })
-          // TODO update attributes name
-          const coordinates = tile.attrs.land.COORDINATES
-          const resource = tile.attrs.land.RESOURCE
-          const rarity = tile.attrs.land.RARITY
-          const edition = tile.attrs.land.edition
-          tooltip
-            .getText()
-            .text(
-              `id: ${edition}\nposition: [${coordinates}]\nresource: ${resource}\nrarity: ${rarity}\nClick to open`
-            )
-
-          if (mousePos.y < 128) {
-            tooltip.getTag().pointerDirection('up')
-          } else {
-            tooltip.getTag().pointerDirection('down')
-          }
-          tooltip.show()
-        }
-      })
-
-      layer.on('mouseout', function (evt) {
+      stage.on('mouseout', function (evt) {
         tooltip.hide()
       })
 
-      layer.on('click', this.onClick)
+      stage.on('click', this.onClick)
 
       this.stage = stage;
       this.idsLayer = idsLayer
+      this.ownerLandsLayer = ownerLandsLayer
+      this.forSaleLandsLayer = forSaleLandsLayer
+
+      console.log('end draw')
     },
 
     getTileIdFromResource(resource) {
@@ -508,6 +536,50 @@ export default {
         }
     },
 
+    onMouseMove(evt, tooltip) {
+
+      const tile = evt.target
+        if (tile) {
+          // update tooltip
+          const mousePos = tile.getStage().getRelativePointerPosition()
+          tooltip.position({
+            x: mousePos.x,
+            y: mousePos.y - 5,
+          })
+
+          // check for sale
+          const forSaleLand = this.landsForSale.find(l => l.id === tile.attrs.land.edition)          
+
+          // TODO update attributes name
+          const coordinates = tile.attrs.land.COORDINATES
+          const resource = tile.attrs.land.RESOURCE
+          const rarity = tile.attrs.land.RARITY
+          const edition = tile.attrs.land.edition
+
+          let tooltipText = `id: ${edition}\nposition: [${coordinates}]\nresource: ${resource}\nrarity: ${rarity}\n`
+
+          const price = forSaleLand ? forSaleLand.price : 0
+          if(price > 0){
+            tooltipText += `price: ${price} eth\n`
+          }
+          tooltipText += `Click to open`
+
+          tooltip
+            .getText()
+            .text(
+              tooltipText  
+            )
+
+          if (mousePos.y < 128) {
+            tooltip.getTag().pointerDirection('up')
+          } else {
+            tooltip.getTag().pointerDirection('down')
+          }
+          tooltip.show()
+        }
+      
+    },
+
     onDisplayLandIds() {
       if(this.displayLandIds){
         this.idsLayer.show()
@@ -516,9 +588,205 @@ export default {
       }
     },
 
-    searchAddress(){
-      console.log(this.address)
-      this.address = ""
+    async onDisplayForSale(){
+      this.loadForSale = true
+      this.loadForSaleProgression = 0
+      if(this.displayForSale){
+        console.log("Display for sale")
+        // 1 - get staked lands ids
+        const stakedLandIds = await landContractService.getStakedIds()
+        console.log(stakedLandIds)
+        this.loadForSaleProgression = 10
+
+        // 2 - generate missing ids
+        const availableIds = []
+        for (let i = 1; i <= 10000; i++) {
+          if(!stakedLandIds.find(id => id === i)) {
+            availableIds.push(i)
+          }
+        }
+        console.log(availableIds)
+
+        // 3 - fetch missing ids
+        const landsForSale = await this.getOpenseaInfo(availableIds, "0x17d084106c2f1c716ce39fa015ab022757d30c9a")
+        console.log(landsForSale.map(l => l.id))
+        this.landsForSale = landsForSale
+
+        // 4 - Display lands
+        this.drawPolygonOnLandsIds(landsForSale.map(l => l.id), this.forSaleLandsLayer, '#2081e2')
+
+      } else {
+        console.log("Hide for sale")
+        this.landsForSale = []
+      }
+      this.loadForSale = false
+    },
+
+    async getOpenseaInfo(ids, contractId) {
+
+      let result = []
+
+      // batchs of 30
+      const size = 30
+      const progressionIncrement = 90 / (ids.length / size)
+      // let page = this.OSpage
+      let page = 0
+
+      const promises = []
+
+      while(page*size <= ids.length){
+          // console.log('page ' + page)
+          const batchIds = ids.slice(page*size, page*size+size)
+
+          let idsString = ''
+          for (let i = 0; i < batchIds.length; i++) {
+              if (idsString.length !== 0) {
+              idsString += '&'
+              }
+              idsString += 'token_ids=' + batchIds[i]
+          }
+          // console.log(idsString)
+
+          const options = {
+              method: 'GET',
+              headers: { accept: 'application/json', 'X-API-KEY': ' ' },
+          }
+
+          promises.push(fetch(
+              'https://api.opensea.io/api/v1/assets?' +
+              idsString +
+              '&order_direction=desc' +
+              '&asset_contract_address=' +
+              contractId +
+              '&limit=50&include_orders=true',
+              options
+          ))
+
+          page++
+          this.loadForSaleProgression += progressionIncrement
+          await this.sleep(250)
+      }
+
+      const responses = await Promise.all(promises)
+
+      result = await Promise.all(responses.map(async (r) => {
+          // console.log(response)
+
+          const openseaData = await r.json()
+          // console.log('openseaData')
+          // console.log(openseaData)
+
+          const data = openseaData.assets.map((asset) => {
+              return {
+              id: parseInt(asset.token_id),
+              price: asset.seaport_sell_orders
+                  ? parseInt(asset.seaport_sell_orders[0].current_price) / 1000000000000000000
+                  : null,
+              }
+
+          })
+          // console.log('data')
+          // console.log(data)
+
+          return data
+      }))
+
+
+      // console.log('result')
+      // console.log(result.flat().filter(i => i.price != null))
+
+      return result.flat().filter(i => i.price != null)
+    },
+
+    downloadMap(){
+      this.downloadLoading = true
+      const dataURL = this.stage.toDataURL({ pixelRatio: 1 });
+      const link = document.createElement('a');
+      link.download = 'map.png';
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.downloadLoading = false
+    },
+
+    async searchAddress(){
+      this.loadingAddress = true
+      this.ownerLandsErrorMessage = ''
+      this.ownerLandsMessage = ''
+
+      const landsCount = await landContractService.getLandsCountByOwner(this.address)
+      // console.log(landsCount)
+
+      if(landsCount === 0 ){
+        this.ownerLandsErrorMessage = 'Unknown address or no lands'
+      }
+
+      const promises = []
+      for (let i = 0; i < landsCount; i++) {
+        promises.push(landContractService.getLandByOwnerandIndex(this.address, i))
+      }
+      
+      const landIds = await Promise.all(promises)
+      // console.log(landIds)
+
+      this.drawPolygonOnLandsIds(landIds, this.ownerLandsLayer, 'red')
+
+      // reset address
+      // this.address = ""
+      this.ownerLandsMessage = 'Done! Check map...'
+      this.loadingAddress = false
+      
+    },
+
+    drawPolygonOnLandsIds(ids, layer, color){
+
+      const ownerLands = this.map.properties.filter( l => ids.includes(l.edition))
+      // console.log(ownerLands)
+
+      // reset layer
+      layer.destroyChildren()
+
+      // draw
+      // TODO global var
+      const height =
+        (this.map.outerRadius * 2 * this.map.height) / 2 +
+        (this.map.outerRadius * this.map.height) / 2 +
+        this.map.innerRadius
+      for (const land of ownerLands) {
+        const landCoords = land.COORDINATES.split(' ') // 0 = x, 1 = y, 2 = z
+        const hex = Hex()
+        const coords = hex.toCartesian({
+          q: parseInt(landCoords[0]),
+          r: parseInt(landCoords[2]),
+        }) // col (q)(y) - row (r)(z) - s (x)
+        const resource = this.getTileIdFromResource(land.RESOURCE)
+        if (resource.name !== 0) {
+          // 0 => empty tile
+
+          const poly = new Konva.RegularPolygon({
+            x:
+              (coords.x + (coords.y % 2) * 0.5) * (this.map.innerRadius * 2) +
+              this.map.innerRadius,
+            y:
+              height -
+              (coords.y * this.map.outerRadius * 1.5 + this.map.outerRadius),
+            // y: ((coords.y - map.yOffset) * map.outerRadius * 1.5 + map.outerRadius) + (map.innerRadius*map.height*2* 0.866025404+map.innerRadius),
+            sides: 6,
+            radius: this.map.outerRadius,
+            stroke: color,
+            strokeWidth: 4,
+            land,
+          })
+
+          layer.add(poly)
+        }
+      }
+
+    },
+
+    async sleep (ms) {
+        await new Promise(resolve => setTimeout(resolve, ms));
     }
   },
 }

@@ -124,7 +124,7 @@ export default {
         title: 'Staked Citizens',
       }
     },
-    mounted() {
+    async mounted() {
 
         // init ids
         const ids = []
@@ -138,8 +138,8 @@ export default {
         this.citizenContract = new ethers.Contract(this.contractId, citizenABI, this.$wallet.provider)
 
         // query data
-        this.getContractInfo()
-        // await Promise.all([this.getOpenseaInfo(), this.getContractInfo()]);
+        // this.getContractInfo()
+        await Promise.all([this.getOpenseaInfo(), this.getContractInfo()]);
 
         // this.getStakedForSale()
 

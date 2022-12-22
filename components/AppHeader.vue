@@ -4,13 +4,13 @@
     <v-app-bar app>
 
       <v-toolbar-title v-text="title" />
-      <v-btn
+      <!-- <v-btn
         class="mx-4"
         color="info"
         to="/claimableWeapons">
         <strong>Check unclaimed citizen/land</strong>
-      </v-btn>
-      <!-- <v-spacer /> -->
+      </v-btn> -->
+      <v-spacer />
 
       <!-- <v-btn
           color="primary"
@@ -19,6 +19,13 @@
           <strong>{{
               !!$wallet.account ? $wallet.accountCompact : 'Connect Wallet'
           }}</strong>
+      </v-btn> -->
+
+      <!-- <v-btn
+          color="primary"
+          :disabled="!$wallet.account"
+          @click="$wallet.sign">
+          <strong>Sign</strong>
       </v-btn> -->
     </v-app-bar>
 </template>

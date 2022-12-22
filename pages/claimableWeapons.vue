@@ -13,7 +13,7 @@
     <v-col cols="12" sm="10" md="6">
       <v-card>
         <v-card-title>
-          Lands which did not claimed weapons
+          Lands which did not claim weapons
         </v-card-title>
         <v-data-table
           :headers="landHeaders"
@@ -47,7 +47,7 @@
     <v-col cols="12" sm="10" md="6">
       <v-card>
         <v-card-title>
-          Citizens which did not claimed weapons
+          Citizens which did not claim weapons
         </v-card-title>
         <v-data-table
           :headers="citizenHeaders"
