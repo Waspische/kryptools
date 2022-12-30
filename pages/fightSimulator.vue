@@ -96,11 +96,11 @@ export default {
       debug: true,
       trace: false,
 
-      efATA: 0,
-      efATD: 0,
+      efATA: 25,
+      efATD: 25,
       efAMW: false,
-      efDTA: 0,
-      efDTD: 0,
+      efDTA: 25,
+      efDTD: 25,
       efDTI: false,
       exactFightResult: null,
 

@@ -35,8 +35,8 @@ export default {
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
     '@/plugins/wallet',
-    '@/plugins/GoogleAnalytics',
-    '@/plugins/konvaInit'
+    '@/plugins/konvaInit',
+    '@/plugins/GoogleAnalytics'
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -48,6 +48,7 @@ export default {
     '@nuxtjs/eslint-module',
     // https://go.nuxtjs.dev/vuetify
     '@nuxtjs/vuetify',
+    // '@nuxtjs/google-analytics',
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
@@ -61,6 +62,10 @@ export default {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
     baseURL: '/',
   },
+
+  // googleAnalytics: {
+  //   id: 'G-EWYGZ2XPDW'
+  // },
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
   vuetify: {
